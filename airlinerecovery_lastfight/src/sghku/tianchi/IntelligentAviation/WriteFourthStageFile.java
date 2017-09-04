@@ -41,7 +41,7 @@ public class WriteFourthStageFile {
 			unfixAircraftIdList.add(i);
 		}*/
 		for(int i=1;i<=scenario.aircraftList.size();i++){
-			if(i>=20 && i<=80){
+			if(i>=20 && i<=100){
 				unfixAircraftIdList.add(i);
 			}else{
 				fixAircraftIdList.add(i);

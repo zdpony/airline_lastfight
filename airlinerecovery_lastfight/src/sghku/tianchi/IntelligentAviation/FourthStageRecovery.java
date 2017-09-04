@@ -303,6 +303,10 @@ public class FourthStageRecovery {
 		model.run(candidateAircraftList, candidateFlightList, scenario.airportList, scenario, mustSelectFlightList, connMap);
 
 		try {
+			File file = new File("fourthstagefiles/tempschedule");
+			if(file.exists()){
+				file.delete();
+			}
 			MyFile.creatTxtFile("fourthstagefiles/tempschedule");
 			StringBuilder sb = new StringBuilder();
 			for(Aircraft a:scenario.aircraftList) {
