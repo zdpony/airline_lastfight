@@ -69,7 +69,7 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 				if(f.actualTakeoffT >= f.initialTakeoffT){
 					arc.delay = f.actualTakeoffT - f.initialTakeoffT;
 				}else{
-					arc.delay = f.initialTakeoffT - f.actualTakeoffT;
+					arc.earliness = f.initialTakeoffT - f.actualTakeoffT;
 				}
 				
 				arc.takeoffTime = f.actualTakeoffT;

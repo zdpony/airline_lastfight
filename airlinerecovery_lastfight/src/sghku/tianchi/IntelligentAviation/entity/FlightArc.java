@@ -122,6 +122,11 @@ public class FlightArc {
 			cost += earliness/60.0*Parameter.COST_EARLINESS*flight.importance;
 			cost += delay/60.0*Parameter.COST_DELAY*flight.importance;
 
+
+			if(flight.id == 1083 && takeoffTime == 9590) {
+				System.out.println("1083 f:"+cost+" "+takeoffTime+" "+aircraft.id+" "+earliness+" "+delay);				
+			}
+			
 			cost += ExcelOperator.getFlightTypeChangeParam(flight.initialAircraftType, aircraft.type)*flight.importance;
 			
 			if(flight.initialAircraft.id != aircraft.id) {

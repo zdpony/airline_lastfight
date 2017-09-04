@@ -44,10 +44,10 @@ public class SecondStagePassengerRecovery {
 		
 		//runThirdStageByGreedy(false,scenario);
 		
-		//runThirdStageByCPLEX(scenario);
+		runThirdStageByCPLEX(scenario);
 		
 		OutputResultWithPassenger outputResultWithPassenger = new OutputResultWithPassenger();
-		outputResultWithPassenger.writeResult(scenario, "rachelresult/rachel_secondstage_0902.csv");	
+		outputResultWithPassenger.writeResult(scenario, "rachelresult/rachel_ByCplex_0904.csv");	
 		
 	}
 
