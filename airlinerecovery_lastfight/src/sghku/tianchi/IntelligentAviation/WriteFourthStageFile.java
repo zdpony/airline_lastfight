@@ -26,15 +26,18 @@ public class WriteFourthStageFile {
 		Scenario scenario = new Scenario(Parameter.EXCEL_FILENAME);
 		List<Integer> fixAircraftIdList = new ArrayList<>();
 		List<Integer> unfixAircraftIdList = new ArrayList<>();
-		int number = scenario.aircraftList.size();
-		//int number = 120;
-		for(int i=1;i<=number;i++) {
+		//int number = scenario.aircraftList.size();
+		
+		for(int i=1;i<=20;i++) {
 			fixAircraftIdList.add(i);
 		}
-		for(int i=number+1;i<=scenario.aircraftList.size();i++) {
+		for(int i=21;i<=60;i++) {
 			unfixAircraftIdList.add(i);
 		}
-		readOptimalSchedule(scenario, "rachelresult/rachel_ByCplex_0904.csv", fixAircraftIdList, unfixAircraftIdList);
+		for(int i=61;i<=scenario.aircraftList.size();i++) {
+			fixAircraftIdList.add(i);
+		}
+		readOptimalSchedule(scenario, "fourthstagefiles/result_0904.csv", fixAircraftIdList, unfixAircraftIdList);
 	}
 
 	// 1. 读取之前的schedule
