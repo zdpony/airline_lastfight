@@ -28,15 +28,28 @@ public class WriteFourthStageFile {
 		List<Integer> unfixAircraftIdList = new ArrayList<>();
 		//int number = scenario.aircraftList.size();
 		
-		for(int i=1;i<=20;i++) {
-			fixAircraftIdList.add(i);
-		}
-		for(int i=21;i<=60;i++) {
+		/*for(int i=1;i<=40;i++) {
 			unfixAircraftIdList.add(i);
 		}
-		for(int i=61;i<=scenario.aircraftList.size();i++) {
+		for(int i=41;i<=scenario.aircraftList.size();i++) {
+			fixAircraftIdList.add(i);
+		}*/
+		/*for(int i=1;i<=100;i++) {
 			fixAircraftIdList.add(i);
 		}
+		for(int i=101;i<=scenario.aircraftList.size();i++) {
+			unfixAircraftIdList.add(i);
+		}*/
+		for(int i=1;i<=scenario.aircraftList.size();i++){
+			if(i>=20 && i<=80){
+				unfixAircraftIdList.add(i);
+			}else{
+				fixAircraftIdList.add(i);
+			}
+		}
+		/*for(int i=61;i<=scenario.aircraftList.size();i++) {
+			fixAircraftIdList.add(i);
+		}*/
 		readOptimalSchedule(scenario, "fourthstagefiles/result_0904.csv", fixAircraftIdList, unfixAircraftIdList);
 	}
 

@@ -234,6 +234,9 @@ public class FourthStageCplexModel {
 			
 			for(int id:mustSelectFlightList) {
 				Flight f = sce.flightList.get(id-1);
+				if(f.id == 1071){
+					System.out.println("--------------force 1071 to be selected-------------");
+				}
 				IloLinearNumExpr cont = cplex.linearNumExpr();
 				cont.addTerm(1, z[f.idInCplexModel]);
 				cplex.addEq(cont, 0);
@@ -315,6 +318,23 @@ public class FourthStageCplexModel {
 						a.flightList.clear();
 					}
 					
+					
+
+					for(int i=0;i<flightList.size();i++){
+						Flight f = flightList.get(i);
+
+						if(cplex.getValue(z[i]) > 1e-5){
+
+							solution.cancelledFlightList.add(f);
+
+							//totalPassengerCancelCost += f.connectedPassengerNumber*Parameter.passengerCancelCost+Parameter.passengerCancelCost*f.firstTransferPassengerNumber*2;
+
+							f.isCancelled = true;
+						}else{
+							f.isCancelled = false;
+						}
+					}
+					
 					for(FlightArc fa:flightArcList){
 
 						
@@ -371,7 +391,11 @@ public class FourthStageCplexModel {
 					double cancelCost = 0;
 					for(Flight f:flightList) {
 						if(cplex.getValue(z[f.idInCplexModel]) > 1e-5) {
-							System.out.print(f.id+",");
+							if(f.id == 1071){
+								System.out.print(f.id+" cancelled");
+								
+							}
+							
 							cancelCost += f.importance * Parameter.COST_CANCEL * cplex.getValue(z[f.idInCplexModel]);
 						}
 					}
@@ -402,20 +426,7 @@ public class FourthStageCplexModel {
 						}
 					}
 					
-										
-
-					for(int i=0;i<flightList.size();i++){
-						Flight f = flightList.get(i);
-
-						if(cplex.getValue(z[i]) > 1e-5){
-
-							solution.cancelledFlightList.add(f);
-
-							//totalPassengerCancelCost += f.connectedPassengerNumber*Parameter.passengerCancelCost+Parameter.passengerCancelCost*f.firstTransferPassengerNumber*2;
-
-							f.isCancelled = true;
-						}
-					}
+					
 					
 					
 				}

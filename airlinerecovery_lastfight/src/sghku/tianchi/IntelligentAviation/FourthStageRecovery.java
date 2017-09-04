@@ -23,6 +23,7 @@ import sghku.tianchi.IntelligentAviation.algorithm.NetworkConstructorBasedOnDela
 import sghku.tianchi.IntelligentAviation.clique.Clique;
 import sghku.tianchi.IntelligentAviation.common.MyFile;
 import sghku.tianchi.IntelligentAviation.common.OutputResult;
+import sghku.tianchi.IntelligentAviation.common.OutputResultDigitTime;
 import sghku.tianchi.IntelligentAviation.common.OutputResultWithPassenger;
 import sghku.tianchi.IntelligentAviation.common.Parameter;
 import sghku.tianchi.IntelligentAviation.comparator.FlightComparator2;
@@ -301,12 +302,24 @@ public class FourthStageRecovery {
 		FourthStageCplexModel model = new FourthStageCplexModel();
 		model.run(candidateAircraftList, candidateFlightList, scenario.airportList, scenario, mustSelectFlightList, connMap);
 
-
 		try {
 			MyFile.creatTxtFile("fourthstagefiles/tempschedule");
 			StringBuilder sb = new StringBuilder();
 			for(Aircraft a:scenario.aircraftList) {
 				Collections.sort(a.flightList, new FlightComparator2());
+				for(int i=0;i<a.flightList.size()-1;i++){
+					Flight f1 = a.flightList.get(i);
+					Flight f2 = a.flightList.get(i+1);
+					int connT = f2.actualTakeoffT - f1.actualLandingT;
+					if(connT < 50){
+						Integer shortConnT = scenario.shortConnectionMap.get(f1.id+"_"+f2.id);
+						if(shortConnT == null){
+							System.out.println("over use short connection");
+						}else if(shortConnT > connT){
+							System.out.println("error "+shortConnT+" "+connT);
+						}
+					}
+				}
 				sb.append(a.id+","+1.0+",");
 				for(Flight f:a.flightList) {
 					if(f.isStraightened) {
@@ -322,6 +335,9 @@ public class FourthStageRecovery {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		OutputResultDigitTime outputResult = new OutputResultDigitTime();
+		outputResult.writeResult(scenario, "fourthstagefiles/finalschedule.csv");
 	}
 
 	// 构建时空网络流模型
