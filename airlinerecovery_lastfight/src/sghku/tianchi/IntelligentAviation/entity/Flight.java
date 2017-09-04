@@ -168,6 +168,12 @@ public class Flight {
 
 	public boolean isSelectedInSecondPhase = false;
 
+	//第四阶段需要的信息
+	public int earliestTimeForTransferPassenger = 0;
+	public int latestTimeForTransferPassenger = 0;
+	public int previousPassengerNumber = 0;
+	public Map<Integer,Integer> signChangeMap = new HashMap<>();
+	public int totalPassengerNumber = 0;
 	
 	// 初始化该航班所对应的网络模型
 	public void init() {
