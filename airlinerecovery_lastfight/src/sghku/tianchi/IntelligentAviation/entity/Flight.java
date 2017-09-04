@@ -169,11 +169,12 @@ public class Flight {
 	public boolean isSelectedInSecondPhase = false;
 
 	//第四阶段需要的信息
-	public int earliestTimeForTransferPassenger = 0;
-	public int latestTimeForTransferPassenger = 0;
-	public int previousPassengerNumber = 0;
-	public Map<Integer,Integer> signChangeMap = new HashMap<>();
-	public int totalPassengerNumber = 0;
+	public int earliestTimeDecidedBySignChange = 0;  //由于签转乘客的时间限制，导致本flight的最早起飞时间（不能早于任何signChange原来航班的initial_tkfTime）
+	public int latestTimeDecidedBySignChange = 0;	//由于签转乘客的时间限制，导致本flight的最晚起飞时间（不能晚于任何signChange原来航班的initial_tkfTime + 48 hrs）
+	public int previousPassengerNumber = 0;    	//原来坐这个航班，现在仍然坐这个航班的乘客（用来计算passenger Delay）
+	public Map<Integer,Integer> signChangeMap = new HashMap<>();  //记录每组signChange从哪个航班来  <flightId, passengerNumber>，用来计算signChangeDelay
+	public int totalPassengerNumber = 0;   //所有乘坐这个flight的乘客
+		
 	
 	// 初始化该航班所对应的网络模型
 	public void init() {
