@@ -26,8 +26,8 @@ public class WriteFourthStageFile {
 		Scenario scenario = new Scenario(Parameter.EXCEL_FILENAME);
 		List<Integer> fixAircraftIdList = new ArrayList<>();
 		List<Integer> unfixAircraftIdList = new ArrayList<>();
-		//int number = scenario.aircraftList.size();
-		int number = 120;
+		int number = scenario.aircraftList.size();
+		//int number = 120;
 		for(int i=1;i<=number;i++) {
 			fixAircraftIdList.add(i);
 		}

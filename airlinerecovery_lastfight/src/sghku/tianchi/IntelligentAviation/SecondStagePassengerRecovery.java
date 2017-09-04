@@ -19,10 +19,7 @@ import javax.swing.plaf.synth.SynthSpinnerUI;
 import sghku.tianchi.IntelligentAviation.algorithm.FlightDelayLimitGenerator;
 import sghku.tianchi.IntelligentAviation.algorithm.NetworkConstructor;
 import sghku.tianchi.IntelligentAviation.algorithm.NetworkConstructorBasedOnDelayAndEarlyLimit;
-import sghku.tianchi.IntelligentAviation.clique.Clique;
-import sghku.tianchi.IntelligentAviation.common.OutputResult;
-import sghku.tianchi.IntelligentAviation.common.OutputResultWithPassenger;
-import sghku.tianchi.IntelligentAviation.common.Parameter;
+import sghku.tianchi.IntelligentAviation.common.*;
 import sghku.tianchi.IntelligentAviation.comparator.FlightComparator2;
 import sghku.tianchi.IntelligentAviation.entity.*;
 import sghku.tianchi.IntelligentAviation.model.*;
@@ -40,14 +37,24 @@ public class SecondStagePassengerRecovery {
 
 		Scenario scenario = new Scenario(Parameter.EXCEL_FILENAME);
 
-		runSecondStage(false,scenario);
+		runSecondStage(false,scenario);   //true: linear, false:integer
 		
 		//runThirdStageByGreedy(false,scenario);
 		
 		runThirdStageByCPLEX(scenario);
 		
 		OutputResultWithPassenger outputResultWithPassenger = new OutputResultWithPassenger();
-		outputResultWithPassenger.writeResult(scenario, "rachelresult/rachel_ByCplex_0904.csv");	
+		outputResultWithPassenger.writeResult(scenario, "rachelresult/result_0903.csv");	
+		
+		OutputSecondTransferInfor outputSecondSignChange = new OutputSecondTransferInfor();
+		outputSecondSignChange.writeResult(scenario, "rachelresult/secondTrsfr_0903.csv");	
+		
+		OutputNormalSignChange outputNormalSignChange = new OutputNormalSignChange();
+		outputNormalSignChange.writeResult(scenario, "rachelresult/normalSignChange_0903.csv");	
+		
+		FourthStagePassengerInfor fourInfor = new FourthStagePassengerInfor();
+		fourInfor.generateFourthStagePassengerInfor(scenario, "rachelresult/secondTrsfr_0903.csv", "rachelresult/normalSignChange_0903.csv");
+		fourInfor.writeFourthStagePassengerInfor(scenario, "rachelresult/fourStageFlightInfor.csv", "rachelresult/fourStageMinConnectionTime.csv");
 		
 	}
 
@@ -174,9 +181,7 @@ public class SecondStagePassengerRecovery {
 
 	//计算itinerary，和FlightArcItinerary
 	public static void constructFlightArcItinerary(Scenario sce) {
-		List<Itinerary> allItineraryList = new ArrayList<>();
-		allItineraryList.addAll(sce.itineraryList);
-		
+
 		//生成FlightArcItinerary
 		for (Itinerary ite : sce.itineraryList) {
 			// 生成替代航班相关的FlightArcItinerary
@@ -576,24 +581,6 @@ public class SecondStagePassengerRecovery {
 		sortedFlightList.addAll(sce.flightList);
 		Collections.sort(sortedFlightList, new FlightComparator2());  
 		
-		int mustCancelCost = 0;
-		int connectCancelCost = 0;
-		for(TransferPassenger tp:sce.transferPassengerList) {
-			if(tp.inFlight.isCancelled||tp.inFlight.isStraightened) {
-				mustCancelCost += tp.volume * Parameter.passengerCancelCost *2;
-			}
-		}
-		
-		for(ConnectingFlightpair cf:sce.connectingFlightList) {
-			if(!cf.firstFlight.isStraightened && !cf.secondFlight.isStraightened && (cf.firstFlight.isCancelled || cf.secondFlight.isCancelled)) {
-				mustCancelCost += cf.firstFlight.connectedPassengerNumber * Parameter.passengerCancelCost;
-				connectCancelCost += cf.firstFlight.connectedPassengerNumber * Parameter.passengerCancelCost;
-			}
-		}
-		
-		
-		System.out.println("mustCancelCost:"+mustCancelCost +" conn:"+connectCancelCost);
-		
 		//计算每个flight剩余的座位数
 		for(Flight f:sce.flightList) {
 			if(f.isIncludedInTimeWindow) {
@@ -663,7 +650,7 @@ public class SecondStagePassengerRecovery {
 		//根据没坐上来构建itinerary
 		for(Flight f:sce.flightList) {
 			if(f.isIncludedInTimeWindow) {
-				if(f.isCancelled || f.isStraightened) {
+				if(f.isCancelled || f.isStraightened) {  //如果航班取消或拉直，上面的second&normal都需要recover
 					//check 所有中转乘客的第一截是否坐上
 					for(TransferPassenger tp:sce.transferPassengerList) {
 						if(tp.outFlight.id==f.id) {

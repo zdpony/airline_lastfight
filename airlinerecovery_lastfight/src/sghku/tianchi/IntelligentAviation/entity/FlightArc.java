@@ -66,7 +66,7 @@ public class FlightArc {
 	}
 	
 	//计算该arc的成本
-	public void calculateCost(){
+	public void calculateCost(Scenario scenario){
 		if(flight.isStraightened){
 			cost += ExcelOperator.getFlightTypeChangeParam(flight.connectingFlightpair.firstFlight.initialAircraftType, aircraft.type)*flight.connectingFlightpair.firstFlight.importance;
 			
@@ -81,6 +81,8 @@ public class FlightArc {
 			cost += Parameter.COST_EARLINESS/60.0*earliness*flight.connectingFlightpair.firstFlight.importance;
 			cost += Parameter.COST_DELAY/60.0*delay*flight.connectingFlightpair.firstFlight.importance;
 			cost += Parameter.COST_STRAIGHTEN*(flight.connectingFlightpair.firstFlight.importance+flight.connectingFlightpair.secondFlight.importance);
+			
+			cost += ExcelOperator.getPassengerDelayParameter(delay) * flight.connectingFlightpair.firstFlight.selfPassengerNumber;
 			
 			if(Parameter.isPassengerCostConsidered) {
 				//如果是联程拉直航班，则只需要考虑联程拉直的乘客对应的delay和cancel cost，普通乘客则不需要考虑（因为在cancel flight和signChange那里会考虑）
@@ -137,60 +139,15 @@ public class FlightArc {
 				}
 			}
 			
-			
-			if(Parameter.isPassengerCostConsidered) {
-				int remainingCapacity = aircraft.passengerCapacity;
-				if(flight.isIncludedInConnecting) {
-					if(!flight.isConnectionFeasible){
-						/*首先考虑联程乘客，如果属于联程航班，则代表另一截cancel了，
-						 *如果对应第一截catch，第二截cancel，则对应的联程乘客cancel cost
-						 * 
-						 */
-						if(flight.connectingFlightpair.firstFlight.id == flight.id){
-							cost += flight.connectedPassengerNumber*Parameter.passengerCancelCost;
-							cancelRelatedCost += flight.connectedPassengerNumber*Parameter.passengerCancelCost;
-						}
-					}else{
-						//该联程航班依旧有效，计算联程乘客的延误和取消成本
-						int cancelConnectingPassenger = Math.max(flight.connectedPassengerNumber - remainingCapacity, 0);
-						int flyConnectingPassenger = flight.connectedPassengerNumber - cancelConnectingPassenger;
-						
-						if(flight.id == flight.connectingFlightpair.firstFlight.id){
-							cost += cancelConnectingPassenger * Parameter.passengerCancelCost; //只有第一截考虑cost
-							cancelRelatedCost += cancelConnectingPassenger * Parameter.passengerCancelCost;
-						}
-						cost += flyConnectingPassenger * ExcelOperator.getPassengerDelayParameter(delay);
-						delayRelatedCost += flyConnectingPassenger * ExcelOperator.getPassengerDelayParameter(delay);
-						
-						remainingCapacity = remainingCapacity - flyConnectingPassenger;
-					}					
-				}
+			cost += ExcelOperator.getPassengerDelayParameter(delay) * flight.selfPassengerNumber;
+			for(int fId:flight.signChangeMap.keySet()) {
+				Flight fromFlight = scenario.flightList.get(fId-1);
+				int volume = flight.signChangeMap.get(fId);
 				
-				//考虑中转乘客的延误 -- 假设中转乘客都成功中转
-				//delayCostPerPssgr = ExcelOperator.getPassengerDelayParameter(delay);  //record delay cost per passenger, in case some transfer delays should be deducted due to cancel
-				/*for(TransferPassenger tp:flight.firstPassengerTransferList) {
-					cost += tp.volume * ExcelOperator.getPassengerDelayParameter(delay);
-					//delayCost += tp.volume * ExcelOperator.getPassengerDelayParameter(delay);
-				}
-				for(TransferPassenger tp:flight.secondPassengerTransferList){
-					cost += tp.volume * ExcelOperator.getPassengerDelayParameter(delay);
-					//delayCost += tp.volume * ExcelOperator.getPassengerDelayParameter(delay);
-				}*/
-				//考虑中转乘客的延误 -- 假设中转乘客都成功中转
-				cost += flight.occupiedSeatsByTransferPassenger*ExcelOperator.getPassengerDelayParameter(delay);
-				delayRelatedCost += flight.occupiedSeatsByTransferPassenger*ExcelOperator.getPassengerDelayParameter(delay);
-				
-				//考虑普通乘客的延误（因为联程乘客被cancel了，所以只有普通乘客的延误）
-				
-				remainingCapacity = remainingCapacity - flight.occupiedSeatsByTransferPassenger;  //预留座位给中转乘客--假设中转一定能成功
-				int fliedNormalPassgrNum = Math.min(remainingCapacity, flight.normalPassengerNumber);
-							
-				cost += fliedNormalPassgrNum*ExcelOperator.getPassengerDelayParameter(delay);
-				delayRelatedCost += fliedNormalPassgrNum*ExcelOperator.getPassengerDelayParameter(delay);
-				//普通旅客的取消在模型中通过计算签转得到
-				//delayCost += actualNum*ExcelOperator.getPassengerDelayParameter(delay);
-				
-			}			
+				int signChangeDelay = takeoffTime - fromFlight.initialTakeoffT;
+				cost += Scenario.getSignChangePassengerDelayParam(signChangeDelay/60.)*volume;
+			}
+					
 		}
 	}
 	

@@ -63,6 +63,7 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 			}
 		} else {
 			if(f.isFixed){
+	
 				arc = new FlightArc();
 				arc.flight = f;
 				arc.aircraft = aircraft;
@@ -121,6 +122,13 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 					int endTime = timeLimit[1];
 					
 					for (int t = startTime; t <= endTime; t += presetGap) {
+						if(t < f.earliestTimeDecidedBySignChange || t > f.latestTimeDecidedBySignChange) {
+							continue;
+						}
+						if(aircraft.passengerCapacity < f.totalPassengerNumber) {
+							continue;
+						}
+						
 						int i = (t - f.initialTakeoffT) / presetGap;
 
 						boolean isOriginInAffectedLdnTkfLimitPeriod = false;
@@ -243,6 +251,13 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 					int endTime = timeLimit[1];
 
 					for (int t = startTime; t <= endTime; t += presetGap) {
+						if(t < cf.firstFlight.earliestTimeDecidedBySignChange || t > cf.firstFlight.latestTimeDecidedBySignChange) {
+							continue;
+						}
+						if(aircraft.passengerCapacity < cf.firstFlight.totalPassengerNumber) {
+							continue;
+						}
+						
 						int i = (t - cf.firstFlight.initialTakeoffT) / presetGap;
 
 						FlightArc arc = null;
@@ -306,6 +321,12 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 					
 					
 					for (int t = startTime; t <= endTime; t += presetGap) {
+						if(t < cf.secondFlight.earliestTimeDecidedBySignChange || t > cf.secondFlight.latestTimeDecidedBySignChange) {
+							continue;
+						}
+						if(aircraft.passengerCapacity < cf.secondFlight.totalPassengerNumber) {
+							continue;
+						}
 						
 						int i = (t - cf.secondFlight.initialTakeoffT) / presetGap;
 
@@ -561,7 +582,7 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 					
 					f.flightarcList.add(arc);
 					aircraft.flightArcList.add(arc);
-					arc.calculateCost();
+					arc.calculateCost(scenario);
 
 					//更新25和67机场的停机约束
 					if (f.leg.destinationAirport.id == 25 && arc.landingTime <= Parameter.airport25_67ParkingLimitStart
@@ -641,7 +662,7 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 						arc.flight.itinerary.flightArcList.add(arc);
 					}
 
-					arc.calculateCost();
+					arc.calculateCost(scenario);
 					aircraft.flightArcList.add(arc);
 					
 					// 加入对应的起降时间点
@@ -688,7 +709,7 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 					cf.secondFlight.connectingarcList.add(ca);
 					ca.connectingFlightPair = cf;
 
-					ca.calculateCost();
+					ca.calculateCost(scenario);
 					
 					// 加入25和67停机约束
 					if (cf.firstFlight.leg.destinationAirport.id == 25
@@ -709,7 +730,7 @@ public class NetworkConstructorBasedOnDelayAndEarlyLimit {
 					cf.secondFlight.connectingarcList.add(ca);
 					ca.connectingFlightPair = cf;
 
-					ca.calculateCost();
+					ca.calculateCost(scenario);
 					
 					if (ca.firstArc.isWithinAffectedRegionOrigin) {
 						List<ConnectingArc> caList = scenario.airportTimeConnectingArcMap

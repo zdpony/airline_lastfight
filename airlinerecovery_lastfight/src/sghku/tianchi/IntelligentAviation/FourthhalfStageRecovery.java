@@ -23,6 +23,7 @@ import sghku.tianchi.IntelligentAviation.algorithm.NetworkConstructorBasedOnDela
 import sghku.tianchi.IntelligentAviation.clique.Clique;
 import sghku.tianchi.IntelligentAviation.common.MyFile;
 import sghku.tianchi.IntelligentAviation.common.OutputResult;
+import sghku.tianchi.IntelligentAviation.common.OutputResultDigitTime;
 import sghku.tianchi.IntelligentAviation.common.OutputResultWithPassenger;
 import sghku.tianchi.IntelligentAviation.common.Parameter;
 import sghku.tianchi.IntelligentAviation.comparator.FlightComparator2;
@@ -45,13 +46,13 @@ import sghku.tianchi.IntelligentAviation.model.FourthStageCplexModel;
 import sghku.tianchi.IntelligentAviation.model.IntegratedCplexModel;
 import sghku.tianchi.IntelligentAviation.model.PushForwardCplexModel;
 
-public class FourthStageRecovery {
+public class FourthhalfStageRecovery {
 	public static void main(String[] args) {
 
 		Parameter.isPassengerCostConsidered = false;
 		Parameter.isReadFixedRoutes = true;
 		Parameter.gap = 5;
-		Parameter.fixFile = "fourthstagefiles/fixschedule";
+		Parameter.fixFile = "fourthstagefiles/tempschedule";
 		
 		Parameter.linearsolutionfilename = "gap5_delay9_flightsection1h/linearsolutionwithpassenger_0902_stage1.csv";
 		runOneIteration(true, 70);
@@ -128,100 +129,14 @@ public class FourthStageRecovery {
 		
 		FlightDelayLimitGenerator flightDelayLimitGenerator = new FlightDelayLimitGenerator();
 		
-		List<Flight> candidateFlightList = new ArrayList<>();
-		List<ConnectingFlightpair> candidateConnectingFlightList = new ArrayList<>();
-		List<Flight> candidateStraightenedFlightList = new ArrayList<>();
-		
-		try {
-			Scanner sn = new Scanner(new File("fourthstagefiles/unfixschedule"));
-			while(sn.hasNextLine()) {
-				String nextLine = sn.nextLine().trim();
-				if(nextLine.equals("")) {
-					break;
-				}
-				
-				Scanner innerSn = new Scanner(nextLine);
-				innerSn.useDelimiter(",");
-				innerSn.next();
-				innerSn.next();
-				while(innerSn.hasNext()) {
-					String str = innerSn.next();
-					String[] strArray = str.split("_");
-					
-					if(strArray[0].equals("n")) {
-						int fId = Integer.parseInt(strArray[1]);
-						Flight f = scenario.flightList.get(fId-1);
-						
-						candidateFlightList.add(f);
-					}else if(strArray[0].equals("c")) {
-						int fId1 = Integer.parseInt(strArray[1]);
-						int fId2 = Integer.parseInt(strArray[2]);
-						Flight f1 = scenario.flightList.get(fId1-1);
-						Flight f2 = scenario.flightList.get(fId2-1);
-						
-						candidateConnectingFlightList.add(scenario.connectingFlightMap.get(f1.id+"_"+f2.id));
-					}else if(strArray[0].equals("s")) {
-						int fId1 = Integer.parseInt(strArray[1]);
-						int fId2 = Integer.parseInt(strArray[2]);
-						
-						Flight f1 = scenario.flightList.get(fId1-1);
-						Flight f2 = scenario.flightList.get(fId2-1);
-						
-						//生成联程拉直航班
-						
-						Flight straightenedFlight = new Flight();
-						straightenedFlight.isStraightened = true;
-						straightenedFlight.connectingFlightpair = scenario.connectingFlightMap.get(f1.id+"_"+f2.id);
-						straightenedFlight.leg = straightenedFlight.connectingFlightpair.straightenLeg;
-						
-						straightenedFlight.flyTime = 0;
-								
-						straightenedFlight.initialTakeoffT = f1.initialTakeoffT;
-						straightenedFlight.initialLandingT = straightenedFlight.initialTakeoffT + straightenedFlight.flyTime;
-						
-						straightenedFlight.isAllowtoBringForward = f1.isAllowtoBringForward;
-						straightenedFlight.isAffected = f1.isAffected;
-						straightenedFlight.isDomestic = true;
-						straightenedFlight.earliestPossibleTime = f1.earliestPossibleTime;
-						straightenedFlight.latestPossibleTime = f1.latestPossibleTime;
-						
-						flightDelayLimitGenerator.setFlightDelayLimitForStraightenedFlight(straightenedFlight, scenario);
-						candidateStraightenedFlightList.add(straightenedFlight);
-					}
-				}
-				
-			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-				
-		List<Aircraft> candidateAircraftList= new ArrayList<>();
 		List<Aircraft> fixedAircraftList = new ArrayList<>();
 		
 		for(Aircraft a:scenario.aircraftList) {
 			if(!a.isFixed) {
-				candidateAircraftList.add(a);
+				System.out.println("error there exists one aircraft not fixed!");
+				System.exit(1);
 			}else{
 				fixedAircraftList.add(a);
-			}
-		}
-		
-		for(Aircraft a:candidateAircraftList){
-			for(Flight f:candidateFlightList){
-				if(!a.tabuLegs.contains(f.leg)){
-					a.singleFlightList.add(f);
-				}
-			}
-			for(Flight f:candidateStraightenedFlightList) {
-				if(!a.tabuLegs.contains(f.leg)) {
-					a.straightenedFlightList.add(f);
-				}
-			}
-			for(ConnectingFlightpair cf:candidateConnectingFlightList){
-				if(!a.tabuLegs.contains(cf.firstFlight.leg) && !a.tabuLegs.contains(cf.secondFlight.leg)){
-					a.connectingFlightList.add(cf);
-				}
 			}
 		}
 		
@@ -235,18 +150,6 @@ public class FourthStageRecovery {
 					mustSelectFlightList.add(f.id);
 				}
 			}
-		}
-		
-		for(Flight f:candidateFlightList) {
-			mustSelectFlightList.add(f.id);
-		}
-		for(ConnectingFlightpair cf:candidateConnectingFlightList) {
-			mustSelectFlightList.add(cf.firstFlight.id);
-			mustSelectFlightList.add(cf.secondFlight.id);
-		}
-		for(Flight f:candidateStraightenedFlightList) {
-			mustSelectFlightList.add(f.connectingFlightpair.firstFlight.id);
-			mustSelectFlightList.add(f.connectingFlightpair.secondFlight.id);
 		}
 		
 		System.out.println("mustSelectFlightList:"+mustSelectFlightList.size());
@@ -290,38 +193,19 @@ public class FourthStageRecovery {
 		}
 			
 		//基于目前固定的飞机路径来进一步求解线性松弛模型
-		solver(scenario, scenario.aircraftList, scenario.flightList, candidateConnectingFlightList, mustSelectFlightList, connMap);		
+		solver(scenario, scenario.aircraftList, scenario.flightList, mustSelectFlightList, connMap);		
 		
 	}
 	
 	//求解线性松弛模型或者整数规划模型
-	public static void solver(Scenario scenario, List<Aircraft> candidateAircraftList, List<Flight> candidateFlightList, List<ConnectingFlightpair> candidateConnectingFlightList, Set<Integer> mustSelectFlightList, Map<String,Integer> connMap) {
+	public static void solver(Scenario scenario, List<Aircraft> candidateAircraftList, List<Flight> candidateFlightList, Set<Integer> mustSelectFlightList, Map<String,Integer> connMap) {
 		buildNetwork(scenario, candidateAircraftList, 5);
 		
 		FourthStageCplexModel model = new FourthStageCplexModel();
 		model.run(candidateAircraftList, candidateFlightList, scenario.airportList, scenario, mustSelectFlightList, connMap);
 
-
-		try {
-			MyFile.creatTxtFile("fourthstagefiles/tempschedule");
-			StringBuilder sb = new StringBuilder();
-			for(Aircraft a:scenario.aircraftList) {
-				Collections.sort(a.flightList, new FlightComparator2());
-				sb.append(a.id+","+1.0+",");
-				for(Flight f:a.flightList) {
-					if(f.isStraightened) {
-						sb.append("s_"+f.connectingFlightpair.firstFlight.id+"_"+f.connectingFlightpair.secondFlight.id+"_"+f.actualTakeoffT+"_"+f.actualLandingT+",");
-					}else {
-						sb.append("n_"+f.id+"_"+f.actualTakeoffT+"_"+f.actualLandingT+",");
-					}
-				}
-				sb.append("\n");
-			}
-			MyFile.writeTxtFile(sb.toString());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		OutputResultDigitTime outputResult = new OutputResultDigitTime();
+		outputResult.writeResult(scenario, "fourthstagefiles/finalschedule.csv");
 	}
 
 	// 构建时空网络流模型
@@ -339,28 +223,13 @@ public class FourthStageRecovery {
 			List<ConnectingArc> totalConnectingArcList = new ArrayList<>();
 		
 			for (Flight f : aircraft.singleFlightList) {
+				f.isFixed = false;
 				List<FlightArc> faList = networkConstructorBasedOnDelayAndEarlyLimit.generateArcForFlight(aircraft, f, scenario);
 				totalFlightArcList.addAll(faList);
-			}
-			
-			for (Flight f : aircraft.straightenedFlightList) {
-				List<FlightArc> faList = networkConstructorBasedOnDelayAndEarlyLimit.generateArcForFlight(aircraft, f, scenario);
-				totalFlightArcList.addAll(faList);
-			}
-			
-			for(ConnectingFlightpair cf:aircraft.connectingFlightList){				
-				List<ConnectingArc> caList = networkConstructorBasedOnDelayAndEarlyLimit.generateArcForConnectingFlightPair(aircraft, cf, scenario);
-				totalConnectingArcList.addAll(caList);
 			}
 			
 			networkConstructorBasedOnDelayAndEarlyLimit.eliminateArcs(aircraft, scenario.airportList, totalFlightArcList, totalConnectingArcList, scenario);
 			
-		}
-		
-		for(Flight f:scenario.flightList) {
-			if(f.isStraightened) {
-				
-			}
 		}
 				
 		NetworkConstructor networkConstructor = new NetworkConstructor();

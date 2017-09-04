@@ -33,7 +33,7 @@ public class ConnectingArc {
 	public boolean isVisited = false;
 
 	//计算该联程arc的成本
-	public void calculateCost(){
+	public void calculateCost(Scenario scenario){
 		/*//1. 计算换飞机型号的成本
 		if(firstArc.flight.initialAircraftType != aircraft.type){
 			cost += Parameter.COST_AIRCRAFTTYPE_VARIATION*firstArc.flight.importance;
@@ -76,45 +76,25 @@ public class ConnectingArc {
 
 		cost += Parameter.COST_DELAY*firstArc.flight.importance*firstArc.delay/60.0;
 		cost += Parameter.COST_DELAY*secondArc.flight.importance*secondArc.delay/60.0;
-				
-		if(Parameter.isPassengerCostConsidered) {
-			//首先考虑联程乘客的取消和延误
-			int cancelConnectingPassenger = Math.max(connectingFlightPair.firstFlight.connectedPassengerNumber - aircraft.passengerCapacity, 0);
-			int flyConnectingPassenger = connectingFlightPair.firstFlight.connectedPassengerNumber - cancelConnectingPassenger;
 			
-			//cost += cancelConnectingPassenger * Parameter.passengerCancelCost * 2; //两截都要考虑cancel cost
-			cost += cancelConnectingPassenger * Parameter.passengerCancelCost; //只有第一截考虑cost
-			cancelRelatedCost += cancelConnectingPassenger * Parameter.passengerCancelCost; //record conn cancel cost
 		
-			cost += flyConnectingPassenger * ExcelOperator.getPassengerDelayParameter(firstArc.delay);
-			cost += flyConnectingPassenger * ExcelOperator.getPassengerDelayParameter(secondArc.delay);
+		cost += ExcelOperator.getPassengerDelayParameter(firstArc.delay) * firstArc.flight.selfPassengerNumber;
+		for(int fId:firstArc.flight.signChangeMap.keySet()) {
+			Flight fromFlight = scenario.flightList.get(fId-1);
+			int volume = firstArc.flight.signChangeMap.get(fId);
 			
-			delayRelatedCost += flyConnectingPassenger * ExcelOperator.getPassengerDelayParameter(firstArc.delay); //record conn delay cost
-			delayRelatedCost += flyConnectingPassenger * ExcelOperator.getPassengerDelayParameter(secondArc.delay); //record conn delay cost
-			
-			int passengerCapacity1 = aircraft.passengerCapacity - flyConnectingPassenger;
-			int passengerCapacity2 = aircraft.passengerCapacity - flyConnectingPassenger;
-
-			//考虑中转乘客延误 -- （假设中转乘客都能中转成功）
-			cost += connectingFlightPair.firstFlight.occupiedSeatsByTransferPassenger* ExcelOperator.getPassengerDelayParameter(firstArc.delay);
-			cost += connectingFlightPair.secondFlight.occupiedSeatsByTransferPassenger * ExcelOperator.getPassengerDelayParameter(secondArc.delay);
-			
-			delayRelatedCost += connectingFlightPair.firstFlight.occupiedSeatsByTransferPassenger* ExcelOperator.getPassengerDelayParameter(firstArc.delay); //record transfer delay cost
-			delayRelatedCost += connectingFlightPair.secondFlight.occupiedSeatsByTransferPassenger * ExcelOperator.getPassengerDelayParameter(secondArc.delay); //record transfer delay cost
-			
-			
-			//计算每一个航段剩余座位
-			passengerCapacity1 = Math.max(0, passengerCapacity1-connectingFlightPair.firstFlight.occupiedSeatsByTransferPassenger);
-			passengerCapacity2 = Math.max(0, passengerCapacity2-connectingFlightPair.secondFlight.occupiedSeatsByTransferPassenger);
-
-			//考虑普通乘客的延误
-			cost += Math.min(connectingFlightPair.firstFlight.normalPassengerNumber, passengerCapacity1) * ExcelOperator.getPassengerDelayParameter(firstArc.delay);
-			cost += Math.min(connectingFlightPair.secondFlight.normalPassengerNumber, passengerCapacity2) * ExcelOperator.getPassengerDelayParameter(secondArc.delay);		
-
-			delayRelatedCost += Math.min(connectingFlightPair.firstFlight.normalPassengerNumber, passengerCapacity1) * ExcelOperator.getPassengerDelayParameter(firstArc.delay); //record normal-pssgr delay cost
-			delayRelatedCost += Math.min(connectingFlightPair.secondFlight.normalPassengerNumber, passengerCapacity2) * ExcelOperator.getPassengerDelayParameter(secondArc.delay); //record normal-pssgr delay cost
+			int signChangeDelay = firstArc.takeoffTime - fromFlight.initialTakeoffT;
+			cost += Scenario.getSignChangePassengerDelayParam(signChangeDelay/60.)*volume;
+		}	
 		
-		}		
+		cost += ExcelOperator.getPassengerDelayParameter(secondArc.delay) * secondArc.flight.selfPassengerNumber;
+		for(int fId:secondArc.flight.signChangeMap.keySet()) {
+			Flight fromFlight = scenario.flightList.get(fId-1);
+			int volume = secondArc.flight.signChangeMap.get(fId);
+			
+			int signChangeDelay = secondArc.takeoffTime - fromFlight.initialTakeoffT;
+			cost += Scenario.getSignChangePassengerDelayParam(signChangeDelay/60.)*volume;
+		}	
 	}
 	
 	public void update() {

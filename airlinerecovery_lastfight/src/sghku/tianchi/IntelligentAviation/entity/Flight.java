@@ -21,12 +21,13 @@ public class Flight {
 	public Date landingTime;
 	public int passengerNumber;
 	public int connectedPassengerNumber;
-	public int passengerCapacity;
+
 	public double importance;
 
 	// 初始执行该航班的飞机型号
 	public int initialAircraftType;
 	public Aircraft initialAircraft;
+	public int initialPassengerCapacity;
 
 	// 换算成整数值的起飞和降落时间
 	public int initialTakeoffT;
@@ -98,57 +99,57 @@ public class Flight {
 	//分别表示normal passenger和transfer passenger的数量
 	public int normalPassengerNumber;
 	public int transferPassengerNumber;
-	
+
 	public int firstTransferPassengerNumber;
 	public int secondTransferPassengerNumber;
-	
+
 	public double totalConnectingCancellationCost = 0;
 	public double totalTransferCancellationCost = 0;
 
 	//public boolean isSmallGapRequired = false;
-	
+
 	//对于联程拉直航班对应的属性
 	public Airport actualOrigin = null;
 	public Airport actualDestination = null;
 	public boolean isStraightenedFirst = false;
 	public boolean isStraightenedSecond = false;
-	
+
 	//该航班是否对应于short connection
 	public boolean isShortConnection = false;
 	public int shortConnectionTime = 0;
-	
+
 	public Set<Integer> possibleDelaySet = new HashSet<>();
-	
+
 	//转签乘客信息
 	public Itinerary itinerary;
-	
+
 	public List<FlightSectionItinerary> signChangeItineraryList = new ArrayList<>();
-	
+
 	public List<FlightArcItinerary> flightArcItineraryList = new ArrayList<>();  //第二阶段计算得出的，签转到此flight的转签乘客信息
-	
-	
+
+
 	//第三阶段用的信息
 	//第三阶段用的信息
-		public double normalPassengerCancelNum = 0; //在第二阶段model中得到，用于第三阶段
-		
-		public boolean canAcceptSignChangePssgr = true; //标记是否可以接受其他航班乘客签转过来
-		
-		public int disruptedSecondTransferPssgrNum = 0; //计算可以disrupted的第二截转乘乘客（等待被签转）
-		
-		public TransferItinerary transferItinerary = null;
-		
-		public Map<Integer, Integer> transferSignChangeMap = new HashMap<>();  //key: signToFlightID, value: number of signTo transfer Passenger
-		
-		public int formerFlightLandingTime;
-		
-		public boolean canSignOutTransfer = true;
-		
-		public List<Itinerary> iteList = new ArrayList<>();  //此flight对应的自己的itinerary
-		public List<FlightItinerary> flightIteList = new ArrayList<>();  //签转到此flight的对应flightItinerary
-		public double normalAndSecondTrsfrPassengerCancelNum = 0; //在第二阶段model中得到，用于第三阶段
-		public int normalExcessPassNum = 0;
-		public int signChangeFlag = 0;
-		public double testCost = 0;
+	public double normalPassengerCancelNum = 0; //在第二阶段model中得到，用于第三阶段
+
+	public boolean canAcceptSignChangePssgr = true; //标记是否可以接受其他航班乘客签转过来
+
+	public int disruptedSecondTransferPssgrNum = 0; //计算可以disrupted的第二截转乘乘客（等待被签转）
+
+	public TransferItinerary transferItinerary = null;
+
+	public Map<Integer, Integer> transferSignChangeMap = new HashMap<>();  //key: signToFlightID, value: number of signTo transfer Passenger
+
+	public int formerFlightLandingTime;
+
+	public boolean canSignOutTransfer = true;
+
+	public List<Itinerary> iteList = new ArrayList<>();  //此flight对应的自己的itinerary
+	public List<FlightItinerary> flightIteList = new ArrayList<>();  //签转到此flight的对应flightItinerary
+	public double normalAndSecondTrsfrPassengerCancelNum = 0; //在第二阶段model中得到，用于第三阶段
+	public int normalExcessPassNum = 0;
+	public int signChangeFlag = 0;
+	public double testCost = 0;
 
 	//temp
 	public double totalCost = 0;
@@ -156,13 +157,13 @@ public class Flight {
 	public List<int[]> timeLimitList = new ArrayList<>();
 
 	public int occupiedSeatsByTransferPassenger = 0;
-	
+
 	public double flow = 0;
-	
+
 
 	//进行完first&second stage的求解后，flight上剩余的座位数（能用来承载transfer passenger）的座位数
 	public int remainingSeatNum = 0;
-	
+
 
 	public boolean isConnectionFeasible = false; //标记该航班对应的联程连接是否可行
 
@@ -171,11 +172,13 @@ public class Flight {
 	//第四阶段需要的信息
 	public int earliestTimeDecidedBySignChange = 0;  //由于签转乘客的时间限制，导致本flight的最早起飞时间（不能早于任何signChange原来航班的initial_tkfTime）
 	public int latestTimeDecidedBySignChange = 0;	//由于签转乘客的时间限制，导致本flight的最晚起飞时间（不能晚于任何signChange原来航班的initial_tkfTime + 48 hrs）
-	public int previousPassengerNumber = 0;    	//原来坐这个航班，现在仍然坐这个航班的乘客（用来计算passenger Delay）
+	public int selfPassengerNumber = 0;    	//原来坐这个航班，现在仍然坐这个航班的乘客（用来计算passenger Delay）
 	public Map<Integer,Integer> signChangeMap = new HashMap<>();  //记录每组signChange从哪个航班来  <flightId, passengerNumber>，用来计算signChangeDelay
 	public int totalPassengerNumber = 0;   //所有乘坐这个flight的乘客
-		
+	public int signInPassengerNumber = 0;	
 	
+	public List<FlightItinerary> normalSignInFIList = new ArrayList<>();
+
 	// 初始化该航班所对应的网络模型
 	public void init() {
 		flightarcList.clear();

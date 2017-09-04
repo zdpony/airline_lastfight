@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import ilog.concert.IloException;
@@ -38,7 +39,7 @@ import sghku.tianchi.IntelligentAviation.entity.TransferPassenger;
 public class FourthStageCplexModel {
 	public IloCplex cplex;
 
-	public Solution run(List<Aircraft> aircraftList, List<Flight> flightList, List<Airport> airportList, Scenario sce, Set<Integer> mustSelectFlightList){
+	public Solution run(List<Aircraft> aircraftList, List<Flight> flightList, List<Airport> airportList, Scenario sce, Set<Integer> mustSelectFlightList, Map<String,Integer> connMap){
 		Solution solution = new Solution();
 		solution.involvedAircraftList.addAll(aircraftList);
 
@@ -250,6 +251,55 @@ public class FourthStageCplexModel {
 				cplex.addEq(cont, arc.fractionalFlow);
 			}*/
 			
+			//6. transfer feasibility constraints
+			for(String connStr:connMap.keySet()) {
+				int connT = connMap.get(connStr);
+				String[] connStrArray = connStr.split("_");
+				Flight f1 = sce.flightList.get(Integer.parseInt(connStrArray[0])-1);
+				Flight f2 = sce.flightList.get(Integer.parseInt(connStrArray[1])-1);
+
+				IloLinearNumExpr cont = cplex.linearNumExpr();
+				
+				for(FlightArc arc:f2.flightarcList) {
+					cont.addTerm(arc.takeoffTime, x[arc.id]);
+				}
+				for(ConnectingArc arc:f2.connectingarcList) {
+					if(arc.connectingFlightPair.firstFlight.id == f2.id) {
+						cont.addTerm(arc.firstArc.takeoffTime, beta[arc.id]);
+					}else {
+						cont.addTerm(arc.secondArc.takeoffTime, beta[arc.id]);
+					}
+				}
+				for(FlightArc arc:f1.flightarcList) {
+					cont.addTerm(-arc.landingTime, x[arc.id]);
+				}
+				for(ConnectingArc arc:f1.connectingarcList) {
+					if(arc.connectingFlightPair.firstFlight.id == f1.id) {
+						cont.addTerm(-arc.firstArc.landingTime, beta[arc.id]);
+					}else {
+						cont.addTerm(-arc.secondArc.landingTime, beta[arc.id]);
+					}
+				}
+				cplex.addGe(cont, connT);
+			}
+			
+			/*for(String connStr:connMap.keySet()) {
+				int connT = connMap.get(connStr);
+				String[] connStrArray = connStr.split("_");
+				Flight f1 = sce.flightList.get(Integer.parseInt(connStrArray[0]));
+				Flight f2 = sce.flightList.get(Integer.parseInt(connStrArray[1]));
+
+				IloLinearNumExpr cont = cplex.linearNumExpr();
+				for(FlightArc arc:f2.flightarcList) {
+					cont.addTerm(arc.takeoffTime, x[arc.id]);
+				}
+				for(FlightArc arc:f1.flightarcList) {
+					cont.addTerm(-arc.landingTime, x[arc.id]);
+				}
+				
+				cplex.addGe(cont, connT);
+			}*/
+			
 			if(cplex.solve()){
 
 				
@@ -261,6 +311,10 @@ public class FourthStageCplexModel {
 	
 					double totalArcCost = 0;
 		
+					for(Aircraft a:aircraftList) {
+						a.flightList.clear();
+					}
+					
 					for(FlightArc fa:flightArcList){
 
 						
@@ -275,27 +329,18 @@ public class FourthStageCplexModel {
 							fa.flight.aircraft = fa.aircraft;
 
 							fa.fractionalFlow = cplex.getValue(x[fa.id]);							
-							//System.out.println("fa:"+fa.fractionalFlow+"  "+fa.cost+" "+fa.delay+" "+fa.aircraft.id+" "+fa.flight.initialAircraft.id+"  "+fa.aircraft.type+" "+fa.flight.initialAircraftType+" "+fa.flight.id+" "+fa.flight.isIncludedInConnecting);
-							/*totalOriginalPassengerDelayCost += fa.delayCost;
-							totalPassengerCancelCost += fa.connPssgrCclDueToSubseqCclCost;
-							totalPassengerCancelCost += fa.connPssgrCclDueToStraightenCost;*/
-
-							/*if(fa.aircraft.id == 141) {
-								System.out.println("aircraft 141 fa:"+fa.flight.id+" "+fa.takeoffTime+"->"+fa.landingTime);
-							}*/
-							if(fa.aircraft.id == 142) {
-								System.out.println("aircraft 142 fa:"+fa.flight.id+" "+fa.takeoffTime+"->"+fa.landingTime+" "+fa.cost);
+							
+							fa.aircraft.flightList.add(fa.flight);
+							if(fa.flight.isStraightened) {
+								fa.flight.connectingFlightpair.firstFlight.isStraightened = true;
+								fa.flight.connectingFlightpair.secondFlight.isStraightened = true;
+								fa.flight.connectingFlightpair.secondFlight.isCancelled = true;
 							}
-							/*totalArcCost += fa.cost * cplex.getValue(x[fa.id]);
-							fa.aircraft.totalCost +=  fa.cost * cplex.getValue(x[fa.id]);*/
 						}
 					}
 					
 										
 					for(ConnectingArc arc:connectingArcList){
-						/*if(arc.aircraft.id == 141) {
-							System.out.println("aircraft 141 ca:"+arc.firstArc.flight.id+" "+arc.secondArc.flight.id+" "+arc.firstArc.takeoffTime+" "+arc.secondArc.takeoffTime+" "+arc.firstArc.flight.isIncludedInTimeWindow);
-						}*/
 						if(cplex.getValue(beta[arc.id]) > 1e-5){
 
 							solution.selectedConnectingArcList.add(arc);
@@ -312,17 +357,8 @@ public class FourthStageCplexModel {
 							
 							arc.fractionalFlow = cplex.getValue(beta[arc.id]);
 							
-							/*totalPassengerCancelCost += arc.pssgrCclCostDueToInsufficientSeat;
-							totalOriginalPassengerDelayCost += arc.delayCost;*/
-							
-							/*if(arc.aircraft.id == 141) {
-								System.out.println("aircraft 141 ca:"+arc.firstArc.flight.id+" "+arc.secondArc.flight.id+" "+arc.firstArc.takeoffTime+" "+arc.secondArc.takeoffTime);
-							}*/
-							if(arc.aircraft.id == 142) {
-								System.out.println("aircraft 142 fa:"+arc.firstArc.flight.id+" "+arc.secondArc.flight.id+" "+arc.firstArc.takeoffTime+" "+arc.secondArc.takeoffTime+" "+arc.cost);
-							}
-							/*totalArcCost += arc.cost * cplex.getValue(beta[arc.id]);
-							arc.aircraft.totalCost += arc.cost * cplex.getValue(beta[arc.id]);*/
+							arc.aircraft.flightList.add(arc.firstArc.flight);
+							arc.aircraft.flightList.add(arc.secondArc.flight);
 						}
 					}
 					System.out.println("arc cost:"+totalArcCost);
@@ -378,10 +414,10 @@ public class FourthStageCplexModel {
 							//totalPassengerCancelCost += f.connectedPassengerNumber*Parameter.passengerCancelCost+Parameter.passengerCancelCost*f.firstTransferPassengerNumber*2;
 
 							f.isCancelled = true;
-
 						}
 					}
-
+					
+					
 				}
 
 			else{

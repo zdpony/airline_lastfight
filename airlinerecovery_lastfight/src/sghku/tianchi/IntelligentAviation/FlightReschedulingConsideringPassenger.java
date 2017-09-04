@@ -51,8 +51,8 @@ public class FlightReschedulingConsideringPassenger {
 		int floatedPassenger = 0;
 		for(Flight f:scenario.flightList){
 			if(!f.isIncludedInTimeWindow){
-				if(f.passengerNumber+f.connectedPassengerNumber > f.passengerCapacity){
-					floatedPassenger += f.passengerNumber+f.connectedPassengerNumber - f.passengerCapacity;
+				if(f.passengerNumber+f.connectedPassengerNumber > f.initialPassengerCapacity){
+					floatedPassenger += f.passengerNumber+f.connectedPassengerNumber - f.initialPassengerCapacity;
 				}
 			}
 		}

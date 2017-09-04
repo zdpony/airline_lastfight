@@ -276,7 +276,7 @@ public class ArcChecker {
 				}else{
 					arc.delay = delay;
 				}
-				arc.calculateCost();
+				arc.calculateCost(scenario);
 				totalCost += arc.cost * flow;
 				
 				String key = currentF.id+"_"+currentF.actualTakeoffT;
@@ -300,7 +300,7 @@ public class ArcChecker {
 						arc.delay = delay;
 					}
 					
-					arc.calculateCost();
+					arc.calculateCost(scenario);
 					totalCost += arc.cost * flow;
 					
 					String key = currentF.connectingFlightpair.firstFlight.id+"_"+currentF.connectingFlightpair.secondFlight.id+"_"+currentF.connectingFlightpair.firstFlight.actualTakeoffT;
@@ -343,7 +343,7 @@ public class ArcChecker {
 							ca.firstArc = firstArc;
 							ca.secondArc = secondArc;
 							ca.aircraft = a;
-							ca.calculateCost();
+							ca.calculateCost(scenario);
 							totalCost += ca.cost * flow;
 							
 							selectedFlightList.remove(0);
@@ -368,7 +368,7 @@ public class ArcChecker {
 								arc.delay = delay;
 							}
 							
-							arc.calculateCost();
+							arc.calculateCost(scenario);
 							totalCost += arc.cost * flow;
 							
 							String key = currentF.id+"_"+currentF.actualTakeoffT;
@@ -392,7 +392,7 @@ public class ArcChecker {
 							arc.delay = delay;
 						}
 						
-						arc.calculateCost();
+						arc.calculateCost(scenario);
 						totalCost += arc.cost * flow;
 						
 						String key = currentF.id+"_"+currentF.actualTakeoffT;

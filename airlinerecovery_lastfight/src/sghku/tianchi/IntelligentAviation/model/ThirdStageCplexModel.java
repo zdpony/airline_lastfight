@@ -74,7 +74,7 @@ public class ThirdStageCplexModel {
 				f.idInCplexModel = i;
 				x[i] = cplex.boolVar();
 				if(f.id==11) {
-					System.out.println("f_id-"+f.id+" remainSeatNum:"+f.remainingSeatNum+" flightIteSize:"+f.iteList.get(0).flightIteList.size());
+					//System.out.println("f_id-"+f.id+" remainSeatNum:"+f.remainingSeatNum+" flightIteSize:"+f.iteList.get(0).flightIteList.size());
 					for(FlightItinerary fi:f.iteList.get(0).flightIteList) {
 						
 					}
@@ -93,7 +93,7 @@ public class ThirdStageCplexModel {
 			for (int i = 0; i < iteList.size(); i++) {
 				Itinerary ite = iteList.get(i);
 				ite.id = i;
-				passCancel[i] = cplex.numVar(0, ite.volume);
+				passCancel[i] = cplex.intVar(0, ite.volume);
 				obj.addTerm(Parameter.passengerCancelCost, passCancel[i]);  
 			}		
 			
@@ -296,11 +296,30 @@ public class ThirdStageCplexModel {
 					}
 					
 				}
-				for(Flight f:flightList) {
-					if(f.testCost > 1e-5) {
-						System.out.println(f.id+" "+f.testCost);
-					}
+				//单独输出TP的中转信息
+				for (int i = 0; i < flightIteList.size(); i++) {
+					FlightItinerary fi = flightIteList.get(i);
+					if (cplex.getValue(passX[i]) > 1e-5) {  //有签转发生
+						if(fi.thirdStageite.tp!=null) {  //普通乘客不考虑
+							fi.volume = cplex.getValue(passX[i]);
+							fi.thirdStageite.tp.flightIteList.add(fi);
+						}else {  //普通乘客的放进signInflight对应的normalSignInFIList
+							fi.volume = cplex.getValue(passX[i]);
+							fi.flight.normalSignInFIList.add(fi);
+						}
+					}					
 				}
+				
+				for (int i = 0; i < iteList.size(); i++) {
+					Itinerary ite = iteList.get(i);
+					if (cplex.getValue(passCancel[i]) > 1e-5) {
+						if(ite.tp!=null) {
+							ite.tp.cancelNum = (int)Math.round(cplex.getValue(passCancel[i]));
+						}
+						
+					}				
+				}
+				
 				
 				System.out.println("totalSignChangeDelayCost:" + totalSignChangeDelayCost);
 
@@ -313,21 +332,13 @@ public class ThirdStageCplexModel {
 					}
 				}
 				
-				for(Flight f:flightList) {
-					if(f.id==806) {
-						System.out.println("806 x_value "+cplex.getValue(x[f.idInCplexModel]));
-						for (Itinerary ite: f.iteList) {
-							System.out.println("806 y_value "+cplex.getValue(y[ite.id]));
-						}
-					}
-				}
 				System.out.println("totalNormalAndSecondTrsfrCancelCost:" + totalNormalAndSecondTrsfrCancelCost);
 				
-				double totalCancelCost = 0;
+				double totalCancelNum = 0;
 				for(Flight f:flightList) {
 					if(f.isIncludedInTimeWindow) {
 						double totalSignOutChangePassNum = 0;
-						double passengerCancelScore = 0;
+						double passengerCancelNum = 0;
 						if(f.itinerary!=null) {
 							for(FlightArcItinerary fai:f.itinerary.flightArcItineraryList) {
 								totalSignOutChangePassNum += fai.volume;
@@ -337,16 +348,15 @@ public class ThirdStageCplexModel {
 						
 						if(f.isCancelled) {
 							if(f.isIncludedInConnecting && f.connectingFlightpair.firstFlight.id == f.id && f.passengerNumber+f.connectedPassengerNumber - totalSignOutChangePassNum > 0) {
-								passengerCancelScore += (f.passengerNumber + f.connectedPassengerNumber - totalSignOutChangePassNum)*4;
+								passengerCancelNum += (f.passengerNumber + f.connectedPassengerNumber - totalSignOutChangePassNum);
 							}else {
 								if(f.passengerNumber - totalSignOutChangePassNum > 0) {
-									passengerCancelScore += (f.passengerNumber - totalSignOutChangePassNum)*4;
+									passengerCancelNum += (f.passengerNumber - totalSignOutChangePassNum);
 								}
 							}
 							
 						}else if(f.isStraightened) {
-							 passengerCancelScore += (f.passengerNumber - totalSignOutChangePassNum)
-			                            * 4;
+							passengerCancelNum += (f.passengerNumber - totalSignOutChangePassNum);
 							
 						}else {
 							int totalPassengerNum = f.passengerNumber + f.connectedPassengerNumber;
@@ -394,9 +404,9 @@ public class ThirdStageCplexModel {
 		            					if (cplex.getValue(passCancel[i]) > 1e-5) {
 		            						if(ite.flight.leg.equals(f.leg) && ite.flight.initialTakeoffT <= f.actualTakeoffT &&f.actualTakeoffT<= ite.flight.initialTakeoffT+48*60) {
 		            							if(ite.tp==null) {
-		            								System.out.println("we find a candidate flight for a normal itinerary@!@ way 1:"+remainingSeatNum+" "+f.id+" "+ite.flight.id+" can "+cplex.getValue(passCancel[i])+" previous volume:"+ite.volume+" "+seatNum+" "+totalPassengerNum);
+		            								//System.out.println("we find a candidate flight for a normal itinerary@!@ way 1:"+remainingSeatNum+" "+f.id+" "+ite.flight.id+" can "+cplex.getValue(passCancel[i])+" previous volume:"+ite.volume+" "+seatNum+" "+totalPassengerNum);
 		            							}else if(f.actualTakeoffT>=ite.tp.inFlight.actualLandingT+ite.tp.minTurnaroundTime) {
-		            								System.out.println("we find a candidate flight for a transfer itinerary@!@ way 2:"+remainingSeatNum+" "+f.id+" "+ite.flight.id);
+		            								//System.out.println("we find a candidate flight for a transfer itinerary@!@ way 2:"+remainingSeatNum+" "+f.id+" "+ite.flight.id);
 		            							}
 		            							
 		            						}
@@ -407,18 +417,20 @@ public class ThirdStageCplexModel {
 		                    	//System.out.println("seats not fully occupied : "+f.id+" "+totalPassengerNum+" "+seatNum);
 		                    }
 		                    if(totalSignOutChangePassNum <= totalCancelPassenger){//签转旅客数量不能大于可以取消的旅客数量
-		                        passengerCancelScore += (totalCancelPassenger - totalSignOutChangePassNum)
-		                                * 4;
+		                    	passengerCancelNum += (totalCancelPassenger - totalSignOutChangePassNum);
 		                    }
 		                    
 						}
 						
-						System.out.println("cancelcost "+f.id+" "+passengerCancelScore);
-						totalCancelCost += passengerCancelScore;
+						if(passengerCancelNum>0)System.out.println("cancelNum "+f.id+" "+passengerCancelNum);
+						totalCancelNum += passengerCancelNum;
 					}
-					System.out.println("totalCancelCost:"+totalCancelCost);
+					
 				}
+				System.out.println("totalCancelNum:"+totalCancelNum +"   then show my calculation:");
 
+				
+				
 			} else {
 				System.out.println("Infeasible!!!");
 			}

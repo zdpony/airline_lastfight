@@ -62,7 +62,7 @@ public class NetworkConstructor {
 					f.flightarcList.add(arc);
 					aircraft.flightArcList.add(arc);				
 					
-					arc.calculateCost();
+					arc.calculateCost(scenario);
 					
 					generatedFlightArcList.add(arc);
 				
@@ -223,7 +223,7 @@ public class NetworkConstructor {
 						arc.passengerCapacity = Math.max(0, arc.passengerCapacity);				
 					}
 					
-					arc.calculateCost();
+					arc.calculateCost(scenario);
 					aircraft.flightArcList.add(arc);
 					generatedFlightArcList.add(arc);
 					
@@ -291,7 +291,7 @@ public class NetworkConstructor {
 		f.flightarcList.add(arc);
 		aircraft.flightArcList.add(arc);				
 		
-		arc.calculateCost();
+		arc.calculateCost(scenario);
 		
 		generatedFlightArcList.add(arc);
 		
@@ -378,7 +378,7 @@ public class NetworkConstructor {
 				cf.secondFlight.connectingarcList.add(ca);
 				ca.connectingFlightPair = cf;
 				
-				ca.calculateCost();
+				ca.calculateCost(scenario);
 				generatedConnectingArcList.add(ca);
 				
 				//加入25和67停机约束
@@ -514,7 +514,7 @@ public class NetworkConstructor {
 								ca.connectingFlightPair = cf;
 								
 								connectingArcList.add(ca);
-								ca.calculateCost();
+								ca.calculateCost(scenario);
 								generatedConnectingArcList.add(ca);
 							}
 						}
@@ -587,7 +587,7 @@ public class NetworkConstructor {
 							ca.aircraft = aircraft;
 							
 							connectingArcList.add(ca);
-							ca.calculateCost();
+							ca.calculateCost(scenario);
 							generatedConnectingArcList.add(ca);
 							
 							

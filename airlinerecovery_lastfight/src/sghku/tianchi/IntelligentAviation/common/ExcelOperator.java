@@ -321,9 +321,9 @@ public class ExcelOperator {
 				//读取乘客信息
 				flight.passengerNumber = (int)row.getCell(10).getNumericCellValue();	//旅客数
 				flight.connectedPassengerNumber = (int)row.getCell(11).getNumericCellValue();	//�?�程旅客数
-				flight.passengerCapacity = (int)row.getCell(12).getNumericCellValue();	//�?�程旅客数
+				flight.initialPassengerCapacity = (int)row.getCell(12).getNumericCellValue();	//�?�程旅客数
 
-				aircraftList.get(aircraftID-1).passengerCapacity = flight.passengerCapacity;
+				aircraftList.get(aircraftID-1).passengerCapacity = flight.initialPassengerCapacity;
 				
 				//转换起飞和降落时间
 				flight.initialTakeoffT = flight.takeoffTime.getDate()*1440+flight.takeoffTime.getHours()*60+flight.takeoffTime.getMinutes();
